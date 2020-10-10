@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>44-prompt-for-user-input Direct Line REST UI</title>
+
+<style type="text/css">
+
+body {
+  word-break: break-all;
+  word-wrap: break-word;
+  margin-bottom: 50px;
+
+  background-color: #000000;
+  color: #ffffff;
+}
+
+textarea {
+  line-height: 1.2em;
+}
+
+</style>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<!--
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+<script>//<![CDATA[
+
+	function escape_html (string) {
+	  if(typeof string !== 'string') {
+	    return string;
+	  }
+	  return string.replace(/[&'`"<>]/g, function(match) {
+	   return {
+	      '&': '&amp;',
+	      "'": '&#x27;',
+	      '`': '&#x60;',
+	      '"': '&quot;',
+	      '<': '&lt;',
+	      '>': '&gt;',
+	    }[match]
+	  });
+	}
+
+	function trimingForm(parts) {
+		if( $('#' + parts).length ) {
+			var pval = $('#' + parts).val();
+			if( pval.length > 0 ){
+				pval = pval.trim();
+				$('#' + parts).val(pval.trim());
+			}
+		}
+	}
+
+//]]></script>
+
+  </head>
+
+  <body class="container-fluid"><a name="pagetop"></a>
+
+<div class="row">
+<div class="col-12 pb-2">
+<span style="font-size: 1.3rem;">44-prompt-for-user-input Direct Line REST UI</span>
+</div>
+</div>
+
+<div class="row px-3">
+  <div id="history" class="col-12"></div>
+</div>
+<div class="d-flex w-100 py-2 align-items-center">
+  <textarea id="user_input_ta" rows="2" style="width: 100%;"></textarea> <button id="user_input_bt" type="button" class="btn-danger btn-block p-2 rounded" style="margin-left: 3px; width: 120px; height: 50px;">送信</button>
+</div>
+<div class="row">
+  <div class="col-12">
+※REVISION 0.0.0※
+  </div>
+</div>
+
+<script>
+      //<![CDATA[
+
+	var lastResponse = "";
+
+      function adjustTextArea(textarea) {
+        var lineHeight = parseInt(textarea.css("lineHeight"));
+        var lines = (textarea.val() + "\n").match(/\n/g).length;
+        if (lines < 2) lines = 2;
+        textarea.height(lineHeight * lines);
+      }
+
+	function sendMessage(text){
+
+        var query = "user_input_ta=" + encodeURIComponent(text);
+
+        var jqxhr = $.post("chat-post", query, function() {
+            //alert( "success" );
+        })
+          .done(function(data) {
+                //alert( "second success" );
+                //console.log(data);
+
+			lastResponse = data;
+
+            var history = $("#history").html();
+            history +=
+              '<div class="row py-2">' +
+              '<div class="col-9 rounded" style="border: 1px solid #0000ff;">' +
+              data +
+              "<\/div>" +
+              '<div class="col-3"><\/div>' +
+              "<\/div>";
+            $("#history").html(history);
+
+            //$(window).scrollTop($("#user_input_bt").offset().top);
+          })
+          .fail(function() {
+                //alert( "error" );
+          })
+          .always(function() {
+                //alert( "finished" );
+          });
+
+        jqxhr.always(function() {
+            //alert( "second finished" );
+        });
+
+	}
+
+	$(window).on('pageshow',function(){
+		sendMessage('');
+	});
+
+      $("#user_input_ta").on("input", function(e) {
+        adjustTextArea($(this));
+      });
+
+      $("#user_input_bt").on("click", function() {
+        trimingForm("user_input_ta");
+        var user_input_ta = $("#user_input_ta").val();
+        if (user_input_ta.length <= 0) return;
+        user_input_ta = user_input_ta.replace(/\r\n/g, "\n");
+        var disp_user_input_ta = escape_html(user_input_ta);
+        disp_user_input_ta = disp_user_input_ta.replace(/\n/g, "<br>");
+		user_input_ta = user_input_ta.replace(/\n/g, "");
+
+        var history = $("#history").html();
+        history +=
+          '<div class="row py-2">' +
+          '<div class="col-3"><\/div>' +
+          '<div class="col-9 rounded" style="border: 1px solid #ff0000;">' +
+          disp_user_input_ta +
+          "<\/div>" +
+          "<\/div>";
+        $("#history").html(history);
+
+        $("#user_input_ta").val("");
+        adjustTextArea($("#user_input_ta"));
+
+        //$(window).scrollTop($("#user_input_bt").offset().top);
+
+		sendMessage(user_input_ta);
+      });
+      //]]>
+</script>
+
+  </body>
+</html>
